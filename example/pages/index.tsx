@@ -19,20 +19,14 @@ export default function Index() {
         return [
             new RootStore(new Map()),
             () => toC2,
-            (val: any) => {
-                console.log(val)
-                toC1.next(val)
-            },
+            (val: any) => toC1.next(val),
             new RootStore(new Map()),
             () => toC1,
-            (val: any) => {
-                console.log(val)
-                toC2.next(val)
-            },
+            (val: any) => toC2.next(val),
         ]
     }, [])
     return (
-        <div className="d-flex flex-row">
+        <div className="d-flex flex-row main">
             {global.window != null && (
                 <>
                     <Suspense fallback={"Loading ..."}>
@@ -43,6 +37,7 @@ export default function Index() {
                             sendSignal={sendToC2}
                         />
                     </Suspense>
+                    <div className="border-end border-dark h-100" />
                     <Suspense fallback={"Loading ..."}>
                         <SlaveCounterExamplePage
                             rootStore={c2Root}
@@ -98,8 +93,8 @@ function SlaveCounterExamplePage({
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
-    usePeerConnection(masterOptions, receiveSignal, sendSignal, undefined, rootStore)
-    const store = useStoreSubscription("counter", 1000, (value: number) => new CounterStore(value))
+    usePeerConnection(slaveOptions, receiveSignal, sendSignal, undefined, rootStore)
+    const store = useStoreSubscription("counter", 1000, (value: number) => new CounterStore(value), [], rootStore)
 
     return <CounterExamplePage store={store} />
 }
@@ -116,7 +111,7 @@ function CounterExamplePage({ store }: { store: CounterStore }) {
     const { counter } = useStoreState()
 
     return (
-        <div className="p-3 d-flex flex-row align-items-center">
+        <div className="p-3 d-flex flex-row align-items-center justify-content-center flex-grow-1">
             <h1 className="mx-3">{counter}</h1>
             <button className="m-1 btn btn-outline-primary" onClick={() => store.increase()}>
                 +

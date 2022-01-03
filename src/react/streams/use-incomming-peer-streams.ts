@@ -5,15 +5,13 @@ import { Instance } from "simple-peer"
 
 export function useIncommingPeerStreamsChange(peer: Instance, onChange: (streams: Array<MediaStream>) => void): void {
     const streamsRef = useMemo<{ ref: Array<MediaStream> }>(() => ({ ref: [] }), [peer])
-    const updateIncommingStreams = useCallback(
-        (streams: Array<MediaStream>) => {
+    useEffect(() => {
+        const updateIncommingStreams = (streams: Array<MediaStream>) => {
             streamsRef.ref = streams
             onChange(streamsRef.ref)
-        },
-        [streamsRef, onChange]
-    )
-    useEffect(() => {
-        const subscription = fromEvent<MediaStream>(peer, "stream")
+        }
+
+        const subscription = fromEvent<MediaStream>(peer, "stream", (s) => s)
             .pipe(
                 mergeMap((stream) => {
                     updateIncommingStreams([...streamsRef.ref, stream])
@@ -25,7 +23,7 @@ export function useIncommingPeerStreamsChange(peer: Instance, onChange: (streams
             )
             .subscribe()
         return () => subscription.unsubscribe()
-    }, [peer, updateIncommingStreams, streamsRef])
+    }, [peer, onChange, streamsRef])
 }
 
 export function useIncommingPeerStreams(peer: Instance): Array<MediaStream> {

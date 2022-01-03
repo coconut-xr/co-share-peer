@@ -56,10 +56,14 @@ function connect(
                             disconnect: () => peer.destroy(),
                             publish: (...params) => peer.send(encode(params)),
                             receive: () => fromEvent<Buffer>(peer, "data").pipe(map((data) => decode(data))),
-                            userData,
+                            userData: {
+                                ...userData,
+                                peer
+                            },
                         }
+                        const link = rootStore.link(RootStoreDefaultLinkId, connection)
                         subscription.unsubscribe()
-                        resolve([connection, rootStore.link(RootStoreDefaultLinkId, connection)])
+                        resolve([connection, link])
                     })
                 )
                 .subscribe()

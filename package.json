@@ -13,7 +13,7 @@
         "fix:eslint": "eslint src --fix"
     },
     "dependencies": {
-        "co-share": "^3.2.4",
+        "co-share": "^3.2.5",
         "events": "^3.3.0",
         "messagepack": "^1.1.12",
         "simple-peer": "^9.11.0",
