@@ -6,12 +6,14 @@ import { clear, suspend } from "suspend-react"
 import ReactLoading from "react-loading"
 
 export function MediaDeviceButton({
+    unifier,
     device,
     OffIcon,
     OnIcon,
     setStream,
     ...props
 }: {
+    unifier: number
     setStream: (stream: MediaStream | undefined) => void
     device: ExtendedMediaDeviceInfo
     OnIcon: SvgIconComponent
@@ -20,12 +22,12 @@ export function MediaDeviceButton({
     const [open, setOpen] = useState(false)
     if (open) {
         const listener = () => setOpen(false)
-        const parameters = [device]
+        const parameters = [device, unifier] as [ExtendedMediaDeviceInfo, number]
         return (
             <Suspense
                 fallback={<ReactLoading className={props.className} width={35} height={35} type="spin" color="#fff" />}>
                 <Request
-                    request={requestMediaDeviceStream}
+                    request={(info) => requestMediaDeviceStream(info)}
                     onResult={(stream, error) => {
                         setStream(stream)
                         if (stream == null) {

@@ -1,23 +1,38 @@
 import { useIncommingPeerStreams, useOutgoingPeerStream, usePeerConnection } from "co-share-peer/react"
-import { useStoreSubscription } from "co-share/react"
-import { Suspense, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { CounterStore } from "../src/counter-store"
+import { Suspense, useMemo, useState } from "react"
 import { Observable, Subject } from "rxjs"
-import create from "zustand"
 import { Options } from "simple-peer"
-import { RootStore, Store } from "co-share"
-import { MediaDevicesControl } from "../src/media-devices"
-import { StreamType, useMediaDevices, useSelectDefaultMediaDevice, useStreamType } from "co-media"
-import { Error } from "@material-ui/icons"
+import { Connection, RootStore } from "co-share"
+import { useMediaDevices, useSelectDefaultMediaDevice } from "co-media"
+import { MediaDevicesControl, Stream } from "../src/media-devices"
+import { Header } from "../components/header"
+import { Footer } from "../components/footer"
+import MD from "../content/stream.md"
+
+
+export default function Index() {
+    return (
+        <div className="d-flex flex-column fullscreen">
+            <Header selectedIndex={1} />
+            <div className="d-flex flex-column justify-content-stretch container-lg">
+                <div style={{ height: "calc(90vh - 176px)" }} className="d-flex flex-row-responsive border mt-3">
+                    <Environment />
+                </div>
+                <div className="p-3 flex-basis-0 flex-grow-1">
+                    <MD />
+                </div>
+            </div>
+            <Footer />
+        </div>
+    )
+}
 
 const optionsC1: Options = {
     initiator: true,
 }
 const optionsC2: Options = {}
 
-const isServer = typeof window === "undefined"
-
-export default function Index() {
+export function Environment() {
     const [c1Root, receiveFromC1, sendToC1, c2Root, receiveFromC2, sendToC2] = useMemo(() => {
         const toC1 = new Subject<any>()
         const toC2 = new Subject<any>()
@@ -31,8 +46,8 @@ export default function Index() {
         ]
     }, [])
     return (
-        <div className="d-flex flex-row main">
-            {!isServer && (
+        <>
+            {global.window != null && (
                 <>
                     <Suspense fallback={"Loading ..."}>
                         <MasterCounterExamplePage
@@ -42,7 +57,7 @@ export default function Index() {
                             sendSignal={sendToC2}
                         />
                     </Suspense>
-                    <div className="border-end border-dark h-100" />
+                    <div className="border flex-basis-0 border-dark h-100" />
                     <Suspense fallback={"Loading ..."}>
                         <SlaveCounterExamplePage
                             rootStore={c2Root}
@@ -53,12 +68,16 @@ export default function Index() {
                     </Suspense>
                 </>
             )}
-        </div>
+        </>
     )
 }
 
 const masterOptions: Options = {
     initiator: true,
+}
+
+function empty(): void {
+    //empty
 }
 
 function MasterCounterExamplePage({
@@ -71,9 +90,8 @@ function MasterCounterExamplePage({
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
-    usePeerConnection(masterOptions, receiveSignal, sendSignal, undefined, rootStore)
-
-    return <CounterExamplePage store={rootStore} />
+    const connection = usePeerConnection(masterOptions, receiveSignal, sendSignal, empty, undefined, rootStore)
+    return <StreamPage unifier={0} connection={connection} />
 }
 
 const slaveOptions: Options = {}
@@ -88,14 +106,11 @@ function SlaveCounterExamplePage({
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
-    usePeerConnection(slaveOptions, receiveSignal, sendSignal, undefined, rootStore)
-
-    return <CounterExamplePage store={rootStore} />
+    const connection = usePeerConnection(slaveOptions, receiveSignal, sendSignal, empty, undefined, rootStore)
+    return <StreamPage unifier={1} connection={connection} />
 }
 
-function CounterExamplePage({ store }: { store: Store }) {
-    const incommingStreams = useIncommingPeerStreams(store.mainLink.connection.userData.peer)
-
+function StreamPage({ unifier, connection }: { unifier: number; connection: Connection }) {
     const [outgroundAudioStream, setOutgroundAudioStream] = useState<MediaStream | undefined>(undefined)
     const [outgroundVideoStream, setOutgroundVideoStream] = useState<MediaStream | undefined>(undefined)
     const [outgroundScreenStream, setOutgroundScreenStream] = useState<MediaStream | undefined>(undefined)
@@ -105,55 +120,36 @@ function CounterExamplePage({ store }: { store: Store }) {
         [outgroundAudioStream, outgroundVideoStream, outgroundScreenStream]
     )
 
-    useOutgoingPeerStream(store.mainLink.connection.userData.peer, outgoingStreams)
-
     const devices = useMediaDevices()
 
     const audioInput = useSelectDefaultMediaDevice("audioinput", devices)
     const videoInput = useSelectDefaultMediaDevice("videoinput", devices)
     const screenCapture = useSelectDefaultMediaDevice("screencapture", devices)
 
+    const incommingStreams = useIncommingPeerStreams(connection.userData.peer)
+    useOutgoingPeerStream(connection.userData.peer, outgoingStreams)
+
     return (
-        <div className="flex-grow-1 d-flex flex-column">
-            <Suspense fallback={<span>Loading ...</span>}>
-                <div className="d-flex flex-column flex-grow-1 justify-content-center">
-                    {incommingStreams.map((stream) => (
-                        <Stream key={stream.id} stream={stream} />
-                    ))}
-                </div>
-                <div className="d-flex flex-row align-items-center justify-content-center">
-                    <MediaDevicesControl
-                        audioInput={audioInput}
-                        videoInput={videoInput}
-                        screenCapture={screenCapture}
-                        setAudioStream={setOutgroundAudioStream}
-                        setVideoStream={setOutgroundVideoStream}
-                        setScreenStream={setOutgroundScreenStream}
-                    />
-                </div>
-            </Suspense>
+        <div className="d-flex flex-grow-1 flex-column overflow-hidden flex-basis-0">
+            <div className="d-flex flex-grow-1 flex-column overflow-hidden justify-content-around overflow-hidden">
+                {incommingStreams.map((stream) => (
+                    <Stream key={stream.id} stream={stream} />
+                ))}
+            </div>
+
+            <div className="d-flex flex-row align-items-center justify-content-center">
+                <MediaDevicesControl
+                    unifier={unifier}
+                    audioInput={audioInput}
+                    videoInput={videoInput}
+                    screenCapture={screenCapture}
+                    setAudioStream={setOutgroundAudioStream}
+                    setVideoStream={setOutgroundVideoStream}
+                    setScreenStream={setOutgroundScreenStream}
+                />
+            </div>
         </div>
     )
-}
-
-export function Stream({ stream }: { stream: MediaStream }): JSX.Element {
-    const type = useStreamType(stream)
-    const ref = useRef<HTMLVideoElement | null>(null)
-    useLayoutEffect(() => {
-        if (ref.current != null) {
-            ref.current.srcObject = stream
-            ref.current.play()
-        }
-    }, [stream])
-    switch (type) {
-        case StreamType.AUDIO:
-            return <audio ref={ref} />
-        case StreamType.VIDEO:
-            return <video playsInline className="flex-grow-1 flex-basis-0" ref={ref} />
-        default:
-            ref.current = null
-            return <Error />
-    }
 }
 
 function filterNull<T>(val: T | undefined): val is T {

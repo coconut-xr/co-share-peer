@@ -1,8 +1,23 @@
 {
     "name": "co-share-peer",
     "version": "1.0.0",
-    "description": "provides peer to peer functionality for co-share",
+    "description": "Peer to peer functionality for co-share using simple-peer (webrtc)",
     "main": "",
+    "homepage": "https://cocoss-org.github.io/co-share-peer",
+    "license": "SEE LICENSE IN LICENSE",
+    "author": "Bela Bohlender",
+    "keywords": [
+        "networking",
+        "multiuser",
+        "shared",
+        "typescript",
+        "peer-to-peer",
+        "webrtc"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:cocoss-org/co-share-peer.git"
+    },
     "scripts": {
         "build": "tsc",
         "check": "run-s check:prettier check:eslint",
@@ -13,12 +28,13 @@
         "fix:eslint": "eslint src --fix"
     },
     "dependencies": {
-        "co-share": "^3.2.5",
         "events": "^3.3.0",
         "messagepack": "^1.1.12",
-        "simple-peer": "^9.11.0",
-        "suspend-react": "0.0.8",
-        "uuid": "^8.3.2"
+        "simple-peer": "^9.11.0"
+    },
+    "peerDependencies": {
+        "co-share": "^3.2.6",
+        "suspend-react": "0.0.8"
     },
     "devDependencies": {
         "@types/react": "^17.0.27",
@@ -30,6 +46,8 @@
         "npm-run-all": "^4.1.5",
         "prettier": "^2.2.1",
         "react": "^17.0.2",
-        "typescript": "^4.2.3"
+        "typescript": "^4.2.3",
+        "co-share": "^3.2.6",
+        "suspend-react": "0.0.8"
     }
 }

@@ -6,13 +6,33 @@ import { Observable, Subject } from "rxjs"
 import create from "zustand"
 import { Options } from "simple-peer"
 import { RootStore } from "co-share"
+import { Header } from "../components/header"
+import { Footer } from "../components/footer"
+import MD from "../content/counter.md"
+
+export default function Index() {
+    return (
+        <div className="d-flex flex-column fullscreen">
+            <Header selectedIndex={0} />
+            <div className="d-flex flex-column justify-content-stretch container-lg">
+                <div style={{ height: "calc(90vh - 176px)" }} className="d-flex flex-row-responsive border mt-3">
+                    <Environment />
+                </div>
+                <div className="p-3 flex-basis-0 flex-grow-1">
+                    <MD />
+                </div>
+            </div>
+            <Footer />
+        </div>
+    )
+}
 
 const optionsC1: Options = {
     initiator: true,
 }
 const optionsC2: Options = {}
 
-export default function Index() {
+function Environment() {
     const [c1Root, receiveFromC1, sendToC1, c2Root, receiveFromC2, sendToC2] = useMemo(() => {
         const toC1 = new Subject<any>()
         const toC2 = new Subject<any>()
@@ -26,7 +46,7 @@ export default function Index() {
         ]
     }, [])
     return (
-        <div className="d-flex flex-row main">
+        <>
             {global.window != null && (
                 <>
                     <Suspense fallback={"Loading ..."}>
@@ -37,7 +57,7 @@ export default function Index() {
                             sendSignal={sendToC2}
                         />
                     </Suspense>
-                    <div className="border-end border-dark h-100" />
+                    <div className="border flex-basis-0 border-dark h-100" />
                     <Suspense fallback={"Loading ..."}>
                         <SlaveCounterExamplePage
                             rootStore={c2Root}
@@ -48,12 +68,16 @@ export default function Index() {
                     </Suspense>
                 </>
             )}
-        </div>
+        </>
     )
 }
 
 const masterOptions: Options = {
     initiator: true,
+}
+
+function empty(): void {
+    //empty
 }
 
 function MasterCounterExamplePage({
@@ -76,7 +100,7 @@ function MasterCounterExamplePage({
         }
     }, [rootStore])
 
-    usePeerConnection(masterOptions, receiveSignal, sendSignal, undefined, rootStore)
+    usePeerConnection(masterOptions, receiveSignal, sendSignal, empty, undefined, rootStore)
 
     return <CounterExamplePage store={store} />
 }
@@ -93,7 +117,7 @@ function SlaveCounterExamplePage({
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
-    usePeerConnection(slaveOptions, receiveSignal, sendSignal, undefined, rootStore)
+    usePeerConnection(slaveOptions, receiveSignal, sendSignal, empty, undefined, rootStore)
     const store = useStoreSubscription("counter", 1000, (value: number) => new CounterStore(value), [], rootStore)
 
     return <CounterExamplePage store={store} />

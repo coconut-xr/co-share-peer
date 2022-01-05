@@ -1,73 +1,25 @@
-import { Connection, RootStore, rootStore, RootStoreDefaultLinkId, StoreLink, StoreLinkId } from "co-share"
-import { useEffect, useMemo } from "react"
-import SimplePeer, { Instance, Options } from "simple-peer"
-import { fromEvent } from "rxjs"
-import { map } from "rxjs/operators"
-import { encode, decode } from "messagepack"
-import { Observable, Subscription } from "rxjs"
-import { tap } from "rxjs/operators"
+import { Connection, RootStore, rootStore } from "co-share"
+import { useEffect } from "react"
+import SimplePeer, { Options } from "simple-peer"
+import { Observable } from "rxjs"
 import { suspend } from "suspend-react"
+import { connectPeer } from ".."
+
+const usePeerConnectionPersistSymbol = Symbol()
 
 export function usePeerConnection(
     options: Options,
     receiveSignal: () => Observable<any>,
-    sendSignal: (data: any) => void,
-    userData?: any,
+    onSingal: (data: any) => void,
+    onCleanup: () => void,
+    createUserData?: (instance: SimplePeer.Instance) => any,
     providedRootStore: RootStore = rootStore
 ): Connection {
     const [connection, link] = suspend(
-        connect.bind(null, options, receiveSignal, sendSignal, userData, providedRootStore),
-        [options, receiveSignal, sendSignal, userData, providedRootStore]
+        () => connectPeer(options, receiveSignal, onSingal, onCleanup, createUserData, providedRootStore),
+        [options, receiveSignal, onSingal, createUserData, providedRootStore, usePeerConnectionPersistSymbol]
     )
     useEffect(() => () => link.close(), [link])
 
     return connection
-}
-
-function connect(
-    options: Options,
-    receiveSignal: () => Observable<any>,
-    sendSignal: (data: any) => void,
-    userData: any,
-    rootStore: RootStore
-): Promise<[Connection, StoreLink]> {
-    return new Promise((resolve) => {
-        const peer = new SimplePeer(options)
-        const subscription = new Subscription()
-
-        const cleanUp = () => {
-            subscription.unsubscribe()
-            peer.destroy()
-        }
-
-        subscription.add(
-            receiveSignal()
-                .pipe(tap((data: any) => peer.signal(data)))
-                .subscribe()
-        )
-        subscription.add(fromEvent(peer, "close").pipe(tap(cleanUp)).subscribe())
-        subscription.add(fromEvent(peer, "error").pipe(tap(cleanUp)).subscribe())
-        subscription.add(fromEvent(peer, "signal").pipe(tap(sendSignal)).subscribe())
-        subscription.add(
-            fromEvent(peer, "connect")
-                .pipe(
-                    tap(() => {
-                        const connection: Connection = {
-                            disconnect: () => peer.destroy(),
-                            publish: (...params) => peer.send(encode(params)),
-                            receive: () => fromEvent<Buffer>(peer, "data").pipe(map((data) => decode(data))),
-                            userData: {
-                                ...userData,
-                                peer
-                            },
-                        }
-                        const link = rootStore.link(RootStoreDefaultLinkId, connection)
-                        subscription.unsubscribe()
-                        resolve([connection, link])
-                    })
-                )
-                .subscribe()
-        )
-        return peer
-    })
 }

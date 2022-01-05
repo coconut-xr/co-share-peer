@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { fromEvent } from "rxjs"
+import { useEffect, useMemo, useState } from "react"
+import { fromEvent, combineLatest } from "rxjs"
 import { mergeMap, take, tap } from "rxjs/operators"
 import { Instance } from "simple-peer"
 
@@ -15,9 +15,13 @@ export function useIncommingPeerStreamsChange(peer: Instance, onChange: (streams
             .pipe(
                 mergeMap((stream) => {
                     updateIncommingStreams([...streamsRef.ref, stream])
-                    return fromEvent(stream, "inactive").pipe(
+                    const tracks = stream.getTracks()
+                    return combineLatest(tracks.map((track) => fromEvent(track, "mute"))).pipe(
                         take(1),
-                        tap(() => updateIncommingStreams(streamsRef.ref.filter((s) => s != stream)))
+                        tap(() => {
+                            tracks.forEach((track) => track.stop())
+                            updateIncommingStreams(streamsRef.ref.filter((s) => s != stream))
+                        })
                     )
                 })
             )

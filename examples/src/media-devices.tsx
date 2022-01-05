@@ -1,45 +1,7 @@
-import {
-    ExtendedMediaDeviceInfo,
-    StreamType,
-    useMediaDevices,
-    useSelectDefaultMediaDevice,
-    useStreamType,
-} from "co-media"
+import { ExtendedMediaDeviceInfo, StreamType, useStreamType } from "co-media"
 import { Error, Mic, MicOff, ScreenShare, StopScreenShare, Videocam, VideocamOff } from "@material-ui/icons"
-import React, { useLayoutEffect, useRef, useState } from "react"
+import React, { useLayoutEffect, useRef } from "react"
 import { MediaDeviceButton } from "./media-device-button"
-
-export function MediaDevices(): JSX.Element {
-    const devices = useMediaDevices()
-
-    const audioInput = useSelectDefaultMediaDevice("audioinput", devices)
-    const videoInput = useSelectDefaultMediaDevice("videoinput", devices)
-    const screenCapture = useSelectDefaultMediaDevice("screencapture", devices)
-
-    const [audioStream, setAudioStream] = useState<MediaStream | undefined>(undefined)
-    const [videoStream, setVideoStream] = useState<MediaStream | undefined>(undefined)
-    const [screenStream, setScreenStream] = useState<MediaStream | undefined>(undefined)
-
-    return (
-        <div className="d-flex flex-column flex-grow-1">
-            <div className="d-flex flex-column flex-grow-1 justify-content-center">
-                {audioStream && <Stream stream={audioStream} />}
-                {videoStream && <Stream stream={videoStream} />}
-                {screenStream && <Stream stream={screenStream} />}
-            </div>
-            <div className="d-flex flex-row align-items-center justify-content-center">
-                <MediaDevicesControl
-                    audioInput={audioInput}
-                    videoInput={videoInput}
-                    screenCapture={screenCapture}
-                    setAudioStream={setAudioStream}
-                    setVideoStream={setVideoStream}
-                    setScreenStream={setScreenStream}
-                />
-            </div>
-        </div>
-    )
-}
 
 export function MediaDevicesControl({
     audioInput,
@@ -48,7 +10,9 @@ export function MediaDevicesControl({
     setScreenStream,
     setVideoStream,
     videoInput,
+    unifier,
 }: {
+    unifier: number
     audioInput: ExtendedMediaDeviceInfo | undefined
     videoInput: ExtendedMediaDeviceInfo | undefined
     screenCapture: ExtendedMediaDeviceInfo | undefined
@@ -60,6 +24,7 @@ export function MediaDevicesControl({
         <div className="d-flex flex-row align-items-center m-3 px-2 bg-dark rounded-pill">
             {audioInput && (
                 <MediaDeviceButton
+                    unifier={unifier}
                     fontSize="large"
                     className="m-3 pointer"
                     htmlColor="#fff"
@@ -74,6 +39,7 @@ export function MediaDevicesControl({
 
             {videoInput && (
                 <MediaDeviceButton
+                    unifier={unifier}
                     fontSize="large"
                     className="m-3 pointer"
                     htmlColor="#fff"
@@ -88,6 +54,7 @@ export function MediaDevicesControl({
 
             {screenCapture && (
                 <MediaDeviceButton
+                    unifier={unifier}
                     fontSize="large"
                     className="m-3 pointer"
                     htmlColor="#fff"
