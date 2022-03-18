@@ -4,11 +4,11 @@ import { Suspense, useMemo } from "react"
 import { CounterStore } from "../src/counter-store"
 import { Observable, Subject } from "rxjs"
 import create from "zustand"
-import { Options } from "simple-peer"
 import { RootStore } from "co-share"
 import { Header } from "../components/header"
 import { Footer } from "../components/footer"
 import MD from "../content/counter.md"
+import { ConnectOptions } from "co-share-peer"
 
 export default function Index() {
     return (
@@ -27,10 +27,13 @@ export default function Index() {
     )
 }
 
-const optionsC1: Options = {
+const optionsC1: ConnectOptions = {
     initiator: true,
+    observeStreams: false,
 }
-const optionsC2: Options = {}
+const optionsC2: ConnectOptions = {
+    observeStreams: false,
+}
 
 function Environment() {
     const [c1Root, receiveFromC1, sendToC1, c2Root, receiveFromC2, sendToC2] = useMemo(() => {
@@ -72,8 +75,9 @@ function Environment() {
     )
 }
 
-const masterOptions: Options = {
+const masterOptions: ConnectOptions = {
     initiator: true,
+    observeStreams: false,
 }
 
 function empty(): void {
@@ -86,7 +90,7 @@ function MasterCounterExamplePage({
     rootStore,
 }: {
     rootStore: RootStore
-    options: Options
+    options: ConnectOptions
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
@@ -105,7 +109,9 @@ function MasterCounterExamplePage({
     return <CounterExamplePage store={store} />
 }
 
-const slaveOptions: Options = {}
+const slaveOptions: ConnectOptions = {
+    observeStreams: false
+}
 
 function SlaveCounterExamplePage({
     receiveSignal,
@@ -113,7 +119,7 @@ function SlaveCounterExamplePage({
     rootStore,
 }: {
     rootStore: RootStore
-    options: Options
+    options: ConnectOptions
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {

@@ -1,13 +1,13 @@
 import { useIncommingPeerStreams, useOutgoingPeerStream, usePeerConnection } from "co-share-peer/react"
 import { Suspense, useMemo, useState } from "react"
 import { Observable, Subject } from "rxjs"
-import { Options } from "simple-peer"
 import { Connection, RootStore } from "co-share"
 import { useMediaDevices, useSelectDefaultMediaDevice } from "co-media"
 import { MediaDevicesControl, Stream } from "../src/media-devices"
 import { Header } from "../components/header"
 import { Footer } from "../components/footer"
 import MD from "../content/stream.md"
+import { ConnectOptions } from "co-share-peer"
 
 
 export default function Index() {
@@ -27,10 +27,13 @@ export default function Index() {
     )
 }
 
-const optionsC1: Options = {
+const optionsC1: ConnectOptions = {
     initiator: true,
+    observeStreams: true
 }
-const optionsC2: Options = {}
+const optionsC2: ConnectOptions = {
+    observeStreams: true
+}
 
 export function Environment() {
     const [c1Root, receiveFromC1, sendToC1, c2Root, receiveFromC2, sendToC2] = useMemo(() => {
@@ -72,8 +75,9 @@ export function Environment() {
     )
 }
 
-const masterOptions: Options = {
+const masterOptions: ConnectOptions = {
     initiator: true,
+    observeStreams: true
 }
 
 function empty(): void {
@@ -86,7 +90,7 @@ function MasterCounterExamplePage({
     rootStore,
 }: {
     rootStore: RootStore
-    options: Options
+    options: ConnectOptions
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
@@ -94,7 +98,9 @@ function MasterCounterExamplePage({
     return <StreamPage unifier={0} connection={connection} />
 }
 
-const slaveOptions: Options = {}
+const slaveOptions: ConnectOptions = {
+    observeStreams: true
+}
 
 function SlaveCounterExamplePage({
     receiveSignal,
@@ -102,7 +108,7 @@ function SlaveCounterExamplePage({
     rootStore,
 }: {
     rootStore: RootStore
-    options: Options
+    options: ConnectOptions
     receiveSignal: () => Observable<any>
     sendSignal: (data: any) => void
 }) {
@@ -126,8 +132,8 @@ function StreamPage({ unifier, connection }: { unifier: number; connection: Conn
     const videoInput = useSelectDefaultMediaDevice("videoinput", devices)
     const screenCapture = useSelectDefaultMediaDevice("screencapture", devices)
 
-    const incommingStreams = useIncommingPeerStreams(connection.userData.peer)
-    useOutgoingPeerStream(connection.userData.peer, outgoingStreams)
+    const incommingStreams = useIncommingPeerStreams(connection.userData.instance)
+    useOutgoingPeerStream(connection.userData.instance, outgoingStreams)
 
     return (
         <div className="d-flex flex-grow-1 flex-column overflow-hidden flex-basis-0">
